@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Sedona Canyons 125 · 2027 Crew Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-size:13px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8f8f8;color:#111}
+
+.top-bar{padding:12px 14px 8px;border-bottom:1px solid #e0e0e0;background:#fff;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;position:sticky;top:0;z-index:10}
+.top-bar h1{font-size:14px;font-weight:600;color:#111;margin-bottom:2px}
+.top-bar p{font-size:11px;color:#666}
+.save-status{font-size:10px;color:#999;white-space:nowrap;display:flex;align-items:center;gap:4px;padding-top:2px}
+.save-dot{width:7px;height:7px;border-radius:50%;background:#ccc;flex-shrink:0;transition:background 0.3s}
+.save-dot.saved{background:#16a34a}
+.save-dot.pending{background:#f59e0b}
+
+.defaults-row{display:flex;gap:10px;padding:8px 14px;background:#f2f2f2;border-bottom:1px solid #e0e0e0;align-items:flex-end;flex-wrap:wrap}
+.dg{display:flex;flex-direction:column;gap:3px}
+.dg label{font-size:10px;color:#888;letter-spacing:0.03em}
+.dg select{font-size:12px;padding:4px 6px;border:1px solid #ccc;border-radius:6px;background:#fff;color:#111;-webkit-appearance:auto}
+.reset-btn{font-size:11px;padding:5px 10px;border:1px solid #ccc;border-radius:6px;background:#fff;color:#666;cursor:pointer;margin-left:auto;align-self:flex-end}
+.reset-btn:active{background:#f0f0f0}
+
+.sun-strip{display:flex;border-bottom:1px solid #e0e0e0;background:#fff}
+.sun-day{flex:1;padding:5px 6px;border-right:1px solid #e0e0e0;font-size:9px;color:#888;line-height:1.5}
+.sun-day:last-child{border-right:none}
+.sun-day strong{display:block;font-size:9px;font-weight:600;color:#333}
+
+.legend{display:flex;gap:14px;padding:6px 14px;border-bottom:1px solid #e0e0e0;background:#fff}
+.leg{display:flex;align-items:center;gap:6px;font-size:10px;color:#666}
+.lsw{width:12px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,0.1);flex-shrink:0}
+
+.stations{display:flex;flex-direction:column}
+
+.station-card{border-bottom:1px solid #e0e0e0;padding:11px 14px;background:#fff}
+.station-card.s-night{background:#eeedf8}
+
+.s-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
+.s-name{font-size:13px;font-weight:600;color:#111;line-height:1.3}
+.s-mi{font-size:11px;color:#888;margin-top:1px}
+.s-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.badge{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600;border:1px solid transparent}
+.b-crew{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+.b-pacer{background:#f0fdf4;color:#166534;border-color:#bbf7d0}
+.b-sleep{background:#fffbeb;color:#92400e;border-color:#fde68a}
+.b-shuttle{background:#fff7ed;color:#9a3412;border-color:#fdba74}
+.b-hard{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+
+.s-right{text-align:right;flex-shrink:0;min-width:108px}
+.arr-label{font-size:9px;color:#aaa;letter-spacing:0.03em;margin-bottom:1px}
+.s-time{font-size:16px;font-weight:600;color:#111;white-space:nowrap}
+.s-date{font-size:10px;color:#888}
+.s-elapsed{font-size:10px;color:#888;margin-top:2px}
+.s-depart{font-size:10px;color:#888;margin-top:3px;padding-top:3px;border-top:1px solid #eee}
+
+.seg-bar{background:#f7f7f7;border-radius:7px;padding:7px 10px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid #ececec}
+.seg-left{display:flex;flex-direction:column;gap:2px}
+.seg-label{font-size:9px;color:#aaa;letter-spacing:0.03em}
+.seg-val{font-size:13px;font-weight:600;color:#111}
+.seg-times{display:flex;gap:10px}
+.seg-t{display:flex;flex-direction:column;gap:3px}
+.seg-t-label{font-size:9px;color:#aaa}
+.seg-t select{font-size:11px;padding:3px 4px;border:1px solid #ccc;border-radius:5px;background:#fff;color:#111;-webkit-appearance:auto}
+
+.s-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.s-field{display:flex;flex-direction:column;gap:3px}
+.s-lbl{font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:0.04em}
+.s-field input{font-size:12px;padding:5px 7px;border:1px solid #ccc;border-radius:6px;background:#fff;color:#111;width:100%;-webkit-appearance:none}
+.s-field input:focus{outline:none;border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,0.1)}
+
+.delta-val{font-size:12px;font-weight:600;padding-top:2px}
+.delta-pos{color:#16a34a}
+.delta-neg{color:#dc2626}
+.delta-na{color:#aaa}
+
+.cutoff-row{padding-top:8px;border-top:1px solid #ececec}
+.cutoff-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px}
+.cutoff-lhs{font-size:10px;color:#888;padding-top:2px;line-height:1.4}
+.cutoff-lhs em{font-style:italic;font-size:9px}
+.cutoff-rhs{text-align:right}
+.cutoff-time{font-size:12px;font-weight:600;color:#111}
+.cutoff-interp{font-weight:400;font-style:italic;color:#888}
+.cutoff-date{font-size:10px;color:#888}
+.cutoff-detail{display:flex;justify-content:space-between;align-items:baseline;margin-top:4px}
+.req-pace-label{font-size:10px;color:#888}
+.req-pace-val{font-size:12px;font-weight:600;color:#111}
+.ttc{font-size:11px;font-weight:600}
+.ttc-ok{color:#16a34a}
+.ttc-warn{color:#d97706}
+.ttc-danger{color:#dc2626}
+
+.gps-a{font-size:10px;color:#4f46e5;text-decoration:none;display:inline-flex;align-items:center;gap:3px;margin-top:3px;padding:2px 0}
+
+.footer{padding:12px 14px;font-size:10px;color:#aaa;border-top:1px solid #e0e0e0;background:#fff;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div>
+    <h1>Sedona Canyons 125 · 2027</h1>
+    <p>Tue May 4 · 7:00 AM · Jerome, AZ · 75h cutoff Fri May 7, 10:00 AM</p>
+  </div>
+  <div class="save-status">
+    <div class="save-dot" id="saveDot"></div>
+    <span id="saveLabel">Loading…</span>
+  </div>
+</div>
+
+<div class="defaults-row">
+  <div class="dg">
+    <label>Default pace (min/mi)</label>
+    <select id="defPace"></select>
+  </div>
+  <div class="dg">
+    <label>Default rest</label>
+    <select id="defRest">
+      <option value="0">None</option>
+      <option value="5" selected>5 min</option>
+      <option value="10">10 min</option>
+      <option value="15">15 min</option>
+      <option value="20">20 min</option>
+      <option value="30">30 min</option>
+      <option value="60">60 min</option>
+      <option value="90">90 min</option>
+    </select>
+  </div>
+  <button class="reset-btn" id="resetBtn">Reset all</button>
+</div>
+
+<div class="sun-strip">
+  <div class="sun-day"><strong>Tue May 4</strong>Rise 5:49a · Set 7:22p</div>
+  <div class="sun-day"><strong>Wed May 5</strong>Rise 5:48a · Set 7:23p</div>
+  <div class="sun-day"><strong>Thu May 6</strong>Rise 5:47a · Set 7:24p</div>
+  <div class="sun-day"><strong>Fri May 7</strong>Rise 5:46a · Set 7:25p</div>
+</div>
+
+<div class="legend">
+  <div class="leg"><div class="lsw" style="background:#fff;border-color:#ccc"></div>Daylight</div>
+  <div class="leg"><div class="lsw" style="background:#eeedf8;border-color:#b0aee0"></div>Night — headlamp on</div>
+</div>
+
+<div class="stations" id="stations"></div>
+
+<div class="footer">Sedona Canyons 125 · 2027 · Data saved locally on this device</div>
+
+<script>
+const RACE_START = new Date(2027,4,4,7,0,0);
+const STORE_KEY  = "sc125_2027_v1";
+
+const ST = [
+  {name:"Start — Gold King Mine",  seg:0,    total:0,     crew:false,pacer:false,sleep:false,hard:null,gps:"34.7502,-112.1137"},
+  {name:"Dead Horse Ranch",         seg:8.2,  total:8.2,   crew:true, pacer:false,sleep:false,hard:null,gps:"34.7343,-112.0283"},
+  {name:"Sedona Ranger Station",    seg:8.7,  total:16.9,  crew:true, pacer:false,sleep:false,hard:null,gps:"34.8745,-111.7632"},
+  {name:"Posse Grounds",            seg:7.4,  total:24.3,  crew:true, pacer:false,sleep:true, hard:36,  gps:"34.8691,-111.7606"},
+  {name:"Foxboro Ranch",            seg:10.2, total:34.5,  crew:true, pacer:false,sleep:false,hard:null,gps:"34.9540,-111.7440"},
+  {name:"Crystal Point TH",         seg:0,    total:34.5,  crew:false,pacer:false,sleep:false,hard:null,gps:"34.970,-111.710",  shuttle:true},
+  {name:"Munds Park",               seg:6.7,  total:41.2,  crew:true, pacer:false,sleep:false,hard:48,  gps:"35.0072,-111.7422"},
+  {name:"Kelly Canyon",             seg:12.4, total:53.6,  crew:true, pacer:true, sleep:false,hard:null,gps:"35.1283,-111.7567"},
+  {name:"Homestead",                seg:8.1,  total:61.7,  crew:true, pacer:true, sleep:false,hard:null,gps:"35.180,-111.760"},
+  {name:"Wildcat Hill",             seg:8.6,  total:70.3,  crew:true, pacer:true, sleep:false,hard:null,gps:"35.230,-111.770"},
+  {name:"Fort Tuthill",             seg:16.5, total:86.8,  crew:true, pacer:true, sleep:true, hard:60,  gps:"35.153,-111.655"},
+  {name:"Finish — Heritage Square", seg:39.1, total:125.9, crew:true, pacer:true, sleep:false,hard:75,  gps:"35.1983,-111.6513"},
+];
+
+let paceOvr={}, restOvr={}, actDate={}, actTime={};
+let saveTimer=null;
+
+function storageOK(){
+  try{localStorage.setItem("__t","1");localStorage.removeItem("__t");return true;}catch(e){return false;}
+}
+const HAS_LS = storageOK();
+
+function setLabel(txt, state){
+  document.getElementById("saveLabel").textContent = txt;
+  const d = document.getElementById("saveDot");
+  d.className = "save-dot" + (state==="saved"?" saved":state==="pending"?" pending":"");
+}
+
+function saveState(){
+  if(!HAS_LS) return;
+  const state={
+    defPace: document.getElementById("defPace").value,
+    defRest: document.getElementById("defRest").value,
+    paceOvr, restOvr, actDate, actTime,
+    ts: Date.now()
+  };
+  try{
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    const d=new Date(), h=d.getHours(), m=d.getMinutes();
+    const ap=h>=12?"PM":"AM", hh=h%12||12;
+    setLabel("Saved "+hh+":"+String(m).padStart(2,"0")+" "+ap, "saved");
+  }catch(e){ setLabel("Save failed",""); }
+}
+
+function scheduleSave(){
+  setLabel("Saving…","pending");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveState, 900);
+}
+
+function loadState(){
+  if(!HAS_LS){ setLabel("No storage",""); return false; }
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw){ setLabel("No saved data",""); return false; }
+    const s = JSON.parse(raw);
+    if(s.defPace){
+      const dp = document.getElementById("defPace");
+      for(let o of dp.options){ if(Math.abs(parseFloat(o.value)-parseFloat(s.defPace))<0.01){ o.selected=true; break; } }
+    }
+    if(s.defRest) document.getElementById("defRest").value = s.defRest;
+    paceOvr = s.paceOvr||{}; restOvr = s.restOvr||{};
+    actDate = s.actDate||{}; actTime = s.actTime||{};
+    if(s.ts){
+      const d=new Date(s.ts), h=d.getHours(), m=d.getMinutes();
+      const ap=h>=12?"PM":"AM", hh=h%12||12;
+      setLabel("Saved "+hh+":"+String(m).padStart(2,"0")+" "+ap, "saved");
+    }
+    return true;
+  }catch(e){ setLabel("Load error",""); return false; }
+}
+
+function resetAll(){
+  if(!confirm("Clear all actual arrivals and pace overrides? This cannot be undone.")) return;
+  paceOvr={}; restOvr={}; actDate={}; actTime={};
+  if(HAS_LS) try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+  const dp = document.getElementById("defPace");
+  for(let o of dp.options){ if(Math.abs(parseFloat(o.value)-20)<0.01){ o.selected=true; break; } }
+  document.getElementById("defRest").value = "5";
+  setLabel("Reset","");
+  build();
+}
+
+function makePaceOpts(sel, cur){
+  sel.innerHTML = "";
+  for(let v=5; v<=30; v+=0.25){
+    const mn=Math.floor(v), sc=Math.round((v-mn)*60);
+    const o=document.createElement("option");
+    o.value=v; o.textContent=mn+":"+String(sc).padStart(2,"0");
+    if(Math.abs(v-cur)<0.01) o.selected=true;
+    sel.appendChild(o);
+  }
+}
+
+function interp(){
+  const n=ST.length, c=new Array(n).fill(null);
+  ST.forEach((s,i)=>{ if(s.hard!==null) c[i]=s.hard*3600000; });
+  c[0]=0;
+  for(let i=1;i<n;i++){
+    if(c[i]!==null) continue;
+    let pi=i-1; while(pi>=0&&c[pi]===null) pi--;
+    let ni=i+1; while(ni<n&&c[ni]===null) ni++;
+    if(pi<0||ni>=n) continue;
+    const span=ST[ni].total-ST[pi].total;
+    if(span<=0){ c[i]=c[pi]; continue; }
+    c[i]=c[pi]+(ST[i].total-ST[pi].total)/span*(c[ni]-c[pi]);
+  }
+  return c;
+}
+
+function isNight(d){
+  const dor=(d-RACE_START)/86400000;
+  const h=d.getHours()+d.getMinutes()/60;
+  const rise=5.82-Math.floor(dor)*0.017;
+  const set=19.37+Math.floor(dor)*0.017;
+  return h<rise||h>set;
+}
+
+const DN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function ft(d){ const h=d.getHours(),m=d.getMinutes(),ap=h>=12?"PM":"AM",hh=h%12||12; return hh+":"+String(m).padStart(2,"0")+" "+ap; }
+function fd(d){ return DN[d.getDay()]+" "+MN[d.getMonth()]+" "+d.getDate(); }
+function fdur(ms){ if(ms==null)return"—"; const neg=ms<0; ms=Math.abs(ms); const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000); return(neg?"−":"")+h+"h "+String(m).padStart(2,"0")+"m"; }
+function fmtP(mpm){ if(!mpm||!isFinite(mpm)||mpm<=0)return"—"; const mn=Math.floor(mpm),sc=Math.round((mpm-mn)*60); return mn+":"+String(sc).padStart(2,"0")+"/mi"; }
+
+function parseAct(i){
+  const tv=actTime[i]||""; if(!tv) return null;
+  const tm=tv.match(/(\d{1,2}):(\d{2})\s*(am|pm)/i); if(!tm) return null;
+  const dv=actDate[i]||"", dm=dv.match(/(\d{1,2})\/(\d{1,2})/);
+  let mon=dm?parseInt(dm[1])-1:RACE_START.getMonth();
+  let day=dm?parseInt(dm[2]):RACE_START.getDate();
+  let h=parseInt(tm[1]), min=parseInt(tm[2]);
+  const ap=tm[3].toLowerCase();
+  if(ap==="pm"&&h!==12) h+=12;
+  if(ap==="am"&&h===12) h=0;
+  return new Date(2027,mon,day,h,min,0);
+}
+
+function build(){
+  const defP = parseFloat(document.getElementById("defPace").value);
+  const defR = parseInt(document.getElementById("defRest").value)||0;
+  const cuts  = interp();
+  const cont  = document.getElementById("stations");
+  cont.innerHTML = "";
+  let runMs = 0;
+
+  ST.forEach((s,i)=>{
+    const pace = paceOvr[i]!=null ? paceOvr[i] : defP;
+    const rest = restOvr[i]!=null ? restOvr[i] : (i===0?0:defR);
+    const segMs = (!s.shuttle&&i>0) ? s.seg*pace*60000 : 0;
+    runMs += segMs;
+    const restMs   = rest*60000;
+    const estArr   = new Date(RACE_START.getTime()+runMs);
+    const estDep   = new Date(estArr.getTime()+restMs);
+    const cutD     = new Date(RACE_START.getTime()+cuts[i]);
+    const isInterp = (s.hard===null&&i>0);
+    const actual   = parseAct(i);
+    const deltaMs  = actual ? estArr.getTime()-actual.getTime() : null;
+    const ttcBase  = actual||estArr;
+    const ttcMs    = cutD.getTime()-ttcBase.getTime();
+    const ttcHrs   = ttcMs/3600000;
+    const ttcCls   = ttcHrs>4?"ttc-ok":ttcHrs>1.5?"ttc-warn":"ttc-danger";
+    const nightRow = i>0&&isNight(estArr);
+    const reqPace  = i>0&&s.total>0 ? (cuts[i]/60000)/s.total : null;
+
+    const badges=[];
+    if(s.crew)    badges.push(`<span class="badge b-crew">Crew access</span>`);
+    if(s.pacer)   badges.push(`<span class="badge b-pacer">Pacer</span>`);
+    if(s.sleep)   badges.push(`<span class="badge b-sleep">Sleep station</span>`);
+    if(s.shuttle) badges.push(`<span class="badge b-shuttle">Shuttle</span>`);
+    if(s.hard>0)  badges.push(`<span class="badge b-hard">${s.hard}h hard cutoff</span>`);
+
+    const segMins = Math.round(segMs/60000);
+    const segH=Math.floor(segMins/60), segM=segMins%60;
+    const segStr  = i===0?"—":(s.shuttle?"Shuttle":segH+"h "+String(segM).padStart(2,"0")+"m");
+    const depNote = rest>0 ? `<div class="s-depart">Depart ${ft(estDep)} · ${fd(estDep)}</div>` : "";
+    const elStr   = i>0 ? `<div class="s-elapsed">Race time at arrival: ${fdur(runMs)}</div>` : "";
+
+    const deltaHtml = deltaMs===null
+      ? `<span class="delta-val delta-na">—</span>`
+      : `<span class="delta-val ${deltaMs>=0?"delta-pos":"delta-neg"}">${deltaMs>=0?"▲ ahead":"▼ behind"} ${fdur(Math.abs(deltaMs))}</span>`;
+
+    const segBarHtml = i===0?"":
+      `<div class="seg-bar">
+        <div class="seg-left">
+          <div class="seg-label">${s.shuttle?"Shuttle segment":s.seg.toFixed(1)+" mi segment"}</div>
+          <div class="seg-val">${segStr}</div>
+        </div>
+        <div class="seg-times">
+          <div class="seg-t">
+            <div class="seg-t-label">Pace</div>
+            <select id="pace-${i}" style="width:74px"></select>
+          </div>
+          <div class="seg-t">
+            <div class="seg-t-label">Rest</div>
+            <select id="rest-${i}" style="width:70px">
+              ${[0,5,10,15,20,30,45,60,90,120].map(r=>`<option value="${r}"${rest===r?" selected":""}>${r===0?"None":r+"m"}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+      </div>`;
+
+    const cutoffHtml = i===0?"":
+      `<div class="cutoff-row">
+        <div class="cutoff-head">
+          <div class="cutoff-lhs">Cutoff${isInterp?"<br><em>interpolated</em>":""}</div>
+          <div class="cutoff-rhs">
+            <div class="cutoff-time ${isInterp?"cutoff-interp":""}">${ft(cutD)}</div>
+            <div class="cutoff-date">${fd(cutD)}</div>
+          </div>
+        </div>
+        <div class="cutoff-detail">
+          <span class="req-pace-label">Required pace</span>
+          <span class="req-pace-val">${fmtP(reqPace)}</span>
+        </div>
+        <div class="cutoff-detail" style="margin-top:3px">
+          <span style="font-size:10px;color:#888">Time remaining</span>
+          <span class="ttc ${ttcCls}">${fdur(ttcMs)}${actual?" (actual)":""}</span>
+        </div>
+      </div>`;
+
+    const card = document.createElement("div");
+    card.className = "station-card" + (nightRow?" s-night":"");
+    card.innerHTML =
+      `<div class="s-top">
+        <div>
+          <div class="s-name">${s.name}</div>
+          <div class="s-mi">${s.total.toFixed(1)} mi total</div>
+          ${badges.length?`<div class="s-badges">${badges.join("")}</div>`:""}
+          <a class="gps-a" href="https://maps.google.com/?q=${s.gps}" target="_blank">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            GPS
+          </a>
+        </div>
+        <div class="s-right">
+          <div class="arr-label">EST. ARRIVAL</div>
+          <div class="s-time">${i===0?"7:00 AM":ft(estArr)}</div>
+          <div class="s-date">${i===0?"Tue May 4":fd(estArr)}</div>
+          ${elStr}${depNote}
+        </div>
+      </div>
+      ${segBarHtml}
+      ${i===0?"":
+        `<div class="s-grid">
+          <div class="s-field">
+            <div class="s-lbl">Actual arrival date</div>
+            <input id="adate-${i}" placeholder="5/4" value="${actDate[i]||""}" type="text" inputmode="decimal">
+          </div>
+          <div class="s-field">
+            <div class="s-lbl">Actual arrival time</div>
+            <input id="atime-${i}" placeholder="7:00 am" value="${actTime[i]||""}" type="text" inputmode="text">
+          </div>
+          <div class="s-field" style="grid-column:1/-1">
+            <div class="s-lbl">Delta vs estimate</div>
+            ${deltaHtml}
+          </div>
+        </div>`}
+      ${cutoffHtml}`;
+
+    cont.appendChild(card);
+
+    if(i>0){
+      const ps = document.getElementById("pace-"+i);
+      makePaceOpts(ps, pace);
+      ps.addEventListener("change", function(){ paceOvr[i]=parseFloat(this.value); scheduleSave(); build(); });
+      document.getElementById("rest-"+i).addEventListener("change", function(){ restOvr[i]=parseInt(this.value); scheduleSave(); build(); });
+      document.getElementById("adate-"+i).addEventListener("blur", function(){ actDate[i]=this.value; scheduleSave(); build(); });
+      document.getElementById("atime-"+i).addEventListener("blur", function(){ actTime[i]=this.value; scheduleSave(); build(); });
+    }
+
+    runMs += restMs;
+  });
+}
+
+// Init
+makePaceOpts(document.getElementById("defPace"), 20);
+loadState();
+build();
+document.getElementById("defPace").addEventListener("change", function(){ scheduleSave(); build(); });
+document.getElementById("defRest").addEventListener("change", function(){ scheduleSave(); build(); });
+document.getElementById("resetBtn").addEventListener("click", resetAll);
+</script>
+</body>
+</html>
